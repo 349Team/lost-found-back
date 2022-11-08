@@ -15,6 +15,7 @@
     "mime-types": "^2.1.35",
     "multer": "^1.4.5-lts.1",
     "prisma": "^4.3.1",
+    "socket.io": "^4.5.3",
     "ts-node": "^10.9.1",
     "uuid": "^9.0.0",
     "winston": "^3.8.2"
