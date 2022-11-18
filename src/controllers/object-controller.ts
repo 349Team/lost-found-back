@@ -1,6 +1,6 @@
 import { Request, Response, Router } from 'express'
 import { uploadManipulator } from '../middleware/upload/upload-manipulator';
-import { HttpExceptionHandler } from '../models/exception-http';
+import { HttpExceptionHandler, InternalServerErrorException, ServiceUnavailableException } from '../models/exception-http';
 import { objectService } from "../services/object-service";
 
 const objectController = Router()
@@ -14,7 +14,7 @@ objectController.post('/', async (req: Request, res: Response) => {
 })
 
 /* add images to object */
-const allowedExtensions = ['png', 'jpg']
+const allowedExtensions = ['png', 'jpg', 'jpeg']
 objectController.post('/images/:objectId', uploadManipulator.asMiddleware('image', 'files/images', allowedExtensions), async (req: Request, res: Response) => {
    try {
       var response = await objectService.addImagesToObject(req.files as (Express.Multer.File[] | undefined), Number(req.params.objectId))
@@ -30,6 +30,15 @@ objectController.get('/:objectId', async (req: Request, res: Response) => {
   } catch (err) { HttpExceptionHandler(res, err) }
 })
 
+/* get all objects */
+objectController.get('/', async (req: Request, res: Response) => {
+   try {
+      var response = await objectService.findAll()
+      return res.status(200).json(response)
+   } catch (err) { HttpExceptionHandler }
+})
+
+
 /* get objects by user id */
 objectController.get('/user/:userId', async (req: Request, res: Response) => {
    try {
@@ -37,6 +46,7 @@ objectController.get('/user/:userId', async (req: Request, res: Response) => {
       res.status(200).json(response)
    } catch (err) { HttpExceptionHandler(res, err) }
 })
+
 
 /* get objectss by tag id */
 objectController.get('/tag/:tagId', async (req: Request, res: Response) => {
@@ -49,8 +59,10 @@ objectController.get('/tag/:tagId', async (req: Request, res: Response) => {
 /* delete object by id */
 objectController.delete('/:objectId', async (req: Request, res: Response) => {
    try {
+      throw new ServiceUnavailableException()
+
       var response = await objectService.deleteObjectById(Number(req.params.objectId))
-      res.status(200).json(response)
+      return res.status(200).json(response)
    } catch (err) { HttpExceptionHandler(res, err)}
 })
 
@@ -62,5 +74,16 @@ objectController.get('/search/:search', async (req: Request, res: Response) => {
    } catch (err) { HttpExceptionHandler(res, err)}
 })
 
+/* finish object */
+objectController.post('/finish/:id', async (req: Request, res: Response) => {
+   try {
+      var id = Number(req.params.id)
+
+      if(!id)  throw new InternalServerErrorException('parse id')
+
+      await objectService.finishObject(id);
+      res.sendStatus(200)
+   } catch (err) { HttpExceptionHandler(res, err)}
+})
 
 export default objectController

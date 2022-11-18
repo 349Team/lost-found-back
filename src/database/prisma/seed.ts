@@ -3,22 +3,44 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient();
 
 const createDefaultUsers = async () => {
-  var users = [
+  var usersPersons = [
     {
-      email: 'userOne@email.com',
-      password: 'userOnePass',
-      updatedAt: new Date()
+      user: {
+        ra: '1001001',
+        password: '1001001',
+        updatedAt: new Date()
+      },
+      person: {
+        email: 'userOne@email.com',
+        full_name: 'user One Full Name',
+        updatedAt: new Date(),
+        campus: 'Campo Mourão',
+      }
     },
     {
-      email: 'userTwo@email.com',
-      password: 'userTwoPass',
-      updatedAt: new Date()
+      user: {
+        ra: '1001002',
+        password: '1001002',
+        updatedAt: new Date()
+      },
+      person: {
+        email: 'userTwo@email.com',
+        full_name: 'user Two Full Name',
+        updatedAt: new Date(),
+        campus: 'Campo Mourão',
+      }
     }
   ]
 
-  await prisma.user.createMany({
-    data: users
-  })
+  for(let userPerson of usersPersons){
+    await prisma.user.create({
+      data: {
+        ...userPerson.user, 
+        Person: { create: {...userPerson.person} }
+      }
+    })
+  }
+
 }
 
 const createDefaultTags = async () => {

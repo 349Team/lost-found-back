@@ -1,26 +1,26 @@
 export type UserCreateRequestDTO = {
-  email: string
+  ra: string
   password: string
   fullName: string
-  nickName: string
+  email: string
   campus: string
 }
 
-export const isUserCreateRequestDTO = (obj: any): obj is UserCreateRequestDTO => !!(obj.email && obj.password && obj.fullName && obj.nickName && obj.campus)
+export const isUserCreateRequestDTO = (obj: any): obj is UserCreateRequestDTO => !!(obj.ra && obj.password && obj.fullName && obj.email && obj.campus)
 
 export class UserResponseDTO {
 
-  constructor( id: number, email: string, fullName: string, nickName: string, campus: string){
+  constructor( id: number, ra: string, fullName: string, email: string, campus: string){
     this.id = id
-    this.email = email
+    this.ra = ra
     this.fullName = fullName
-    this.nickName = nickName
+    this.email = email
     this.campus = campus
   }
   
   id: number
-  email: string
+  ra: string
   fullName: string
-  nickName: string
+  email: string
   campus: string
 }

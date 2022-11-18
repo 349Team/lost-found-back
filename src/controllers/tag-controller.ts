@@ -6,7 +6,7 @@ import { tagService } from '../services/tag-service';
 const tagController = Router()
 
 
-/* get all tags */
+/* buscar todas as tags */
 tagController.get('/', async (req: Request, res: Response) => {
   try {
     var response = await tagService.findAll()
