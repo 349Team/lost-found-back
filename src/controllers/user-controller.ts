@@ -23,7 +23,6 @@ userController.get('/:id', async (req: Request, res: Response) => {
 /* deletar um determinado usuário */
 userController.delete('/:email', async (req: Request, res: Response) => {
    try {
-      throw new ServiceUnavailableException()
       var response = await userService.deleteUserById(Number(req.params.email))
       return res.status(200).json(response)
    } catch (err) { HttpExceptionHandler(res, err) }

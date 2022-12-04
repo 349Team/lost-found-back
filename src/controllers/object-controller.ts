@@ -59,8 +59,6 @@ objectController.get('/tag/:tagId', async (req: Request, res: Response) => {
 /* delete object by id */
 objectController.delete('/:objectId', async (req: Request, res: Response) => {
    try {
-      throw new ServiceUnavailableException()
-
       var response = await objectService.deleteObjectById(Number(req.params.objectId))
       return res.status(200).json(response)
    } catch (err) { HttpExceptionHandler(res, err)}

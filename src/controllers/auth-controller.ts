@@ -20,4 +20,11 @@ authController.post('/me', async (req: Request, res: Response) => {
   } catch (err) { HttpExceptionHandler(res, err) }
 })
 
+authController.post('/logout', async (req: Request, res: Response) => {
+  try {
+    await authService.logout(req.body.token)
+    res.sendStatus(200)
+  } catch (err) { HttpExceptionHandler(res, err) }
+})
+
 export default authController

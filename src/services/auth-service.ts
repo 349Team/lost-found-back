@@ -4,11 +4,12 @@ import { BadRequestException, ForbiddenException, NotFoundException, Unauthorize
 import { userRepository } from "../database/repositories/user-repository"
 
 import { sign, verify } from 'jsonwebtoken'
+import { tokenRepository } from "../database/repositories/token-repository"
 
 class AuthService {
 
    private secret: string = String(process.env.SECRET)
-   private jwtExpires: number = 3600 //1h
+   private jwtExpires: number = 3500 //1h
 
    /**
     * @returns LoginResponseDTO quando login é realizado com sucesso.
@@ -37,6 +38,24 @@ class AuthService {
       return new LoginResponseDTO(user.id, token)
    }
 
+   public async logout(token: string): Promise<void> {
+      if(!token)  throw new BadRequestException('invalid arguments - token access')
+
+      var decode: any = undefined
+
+      try {
+         decode = await verify(token, this.secret) as any
+      } catch (e) {
+         throw new UnauthorizedException('invalid token')
+      }
+
+      if(!decode || !decode.id || !decode.ra)
+         throw new BadRequestException('invalid token')
+
+      if(decode.exp && (decode.exp * 1000) > Date.now())
+         await tokenRepository.create(token, new Date((decode.exp * 1000)))
+   }
+
    /**
     * @returns void quando a autenticação é realizada com sucesso.
     * @throws ExceptionHttp ( BadRequestException, NotFoundException, UnauthorizedException, ForbiddenException or Error ).
@@ -60,6 +79,12 @@ class AuthService {
 
       if(!decode.exp || (decode.exp * 1000) < Date.now())
          throw new ForbiddenException('expired token')
+      
+      var invalidToken = await tokenRepository.search(token)
+
+      if(invalidToken.length) throw new ForbiddenException('invalid token')
+
+      tokenRepository.clearExpireds()
 
       var user = await userRepository.findUser(Number(decode.id))
 

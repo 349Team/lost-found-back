@@ -155,9 +155,16 @@ model Person {
 
 
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "Person_ibfk_1")
-  image      Image?    @relation(fields: [imageId], references: [id], onDelete: Cascade)
+  image      Image?    @relation(fields: [imageId], references: [id], onDelete: SetNull)
 
   @@index([userId], map: "user_id")
+}
+
+model ExpiredToken {
+  id                              Int              @id @default(autoincrement())
+  token                           String           @db.VarChar(255)
+  createdAt                       DateTime         @default(now()) @db.Timestamp(0) @map("created_at")
+  expireAt                        DateTime         @db.Timestamp(0) @map("expire_at")
 }
 
 model Object {
@@ -176,17 +183,17 @@ model Object {
 
 
   images                            Image[]         @relation("Image_Object")
-  owner                             User?           @relation("Object_ownerUser", fields: [ownerId], references: [id])
-  discoverer                        User?           @relation("Object_noOwnerUser", fields: [discovererId], references: [id])
-  tags                              TagsOnObjects[]
+  owner                             User?           @relation("Object_ownerUser", fields: [ownerId], references: [id], onDelete: Cascade)
+  discoverer                        User?           @relation("Object_noOwnerUser", fields: [discovererId], references: [id], onDelete: Cascade)
+  tags                              TagsOnObjects[] 
 
   @@index([discovererId], map: "discoverer_id")
   @@index([ownerId], map: "owner_id")
 }
 
 model Tag {
-  id                                Int             @id @default(autoincrement())
-  title                             String          @db.VarChar(255)
+  id                                Int                 @id @default(autoincrement())
+  title                             String              @db.VarChar(255)
   description                       String?
 
   objecs                            TagsOnObjects[]
@@ -196,8 +203,8 @@ model TagsOnObjects {
   objectId                          Int            @map("object_id")
   tagId                             Int            @map("tag_id")
 
-  object                            Object         @relation(fields: [objectId], references: [id])
-  tag                               Tag            @relation(fields: [tagId], references: [id])
+  object                            Object         @relation(fields: [objectId], references: [id], onDelete: Cascade)
+  tag                               Tag            @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@id([objectId, tagId])
 }
@@ -210,7 +217,7 @@ model Image {
   objectId                          Int?            @map("object_id")   
   personId                          Int?            @map("person_id")
 
-  object                            Object?         @relation("Image_Object", fields: [objectId], references: [id])
+  object                            Object?         @relation("Image_Object", fields: [objectId], references: [id], onDelete: Cascade)
   person                            Person?
 }
 

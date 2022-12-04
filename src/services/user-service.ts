@@ -86,10 +86,7 @@ class UserService {
 
       if(!person) throw new ConflictException("user exists, but user's person doesn't")
 
-      if(!personRepository.deletePerson(person.id))
-         throw new InternalServerErrorException("delete user's person")
-
-      if(!userRepository.deleteUser(user.id))
+      if(!(await userRepository.deleteUser(user.id)))
          throw new InternalServerErrorException("delete user")
 
       return new SimpleResponse(`user with RA '${user.ra}' deleted successfully !`)
