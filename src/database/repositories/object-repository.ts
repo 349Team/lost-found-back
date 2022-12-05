@@ -33,7 +33,7 @@ class ObjectRepository {
   public async findObject(id: number) {
     var object = await Prisma.object.findFirst({
       where: { id: id },
-      include: { images: true, tags: {
+      include: { images: true, messages: true, tags: {
         include: {
           tag: true
         }

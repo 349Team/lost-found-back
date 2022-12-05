@@ -10,7 +10,7 @@ CREATE TYPE "ImageUse" AS ENUM ('GENERAL', 'OBJECT');
 -- CreateTable
 CREATE TABLE "User" (
     "id" SERIAL NOT NULL,
-    "email" VARCHAR(255) NOT NULL,
+    "ra" VARCHAR(255) NOT NULL,
     "password" VARCHAR(255) NOT NULL,
     "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(0) NOT NULL,
@@ -22,7 +22,7 @@ CREATE TABLE "User" (
 CREATE TABLE "Person" (
     "id" SERIAL NOT NULL,
     "full_name" VARCHAR(255) NOT NULL,
-    "nickname" VARCHAR(255) NOT NULL,
+    "email" VARCHAR(255) NOT NULL,
     "campus" VARCHAR(45),
     "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(0) NOT NULL,
@@ -30,6 +30,16 @@ CREATE TABLE "Person" (
     "image_id" INTEGER,
 
     CONSTRAINT "Person_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ExpiredToken" (
+    "id" SERIAL NOT NULL,
+    "token" VARCHAR(255) NOT NULL,
+    "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "expire_at" TIMESTAMP(0) NOT NULL,
+
+    CONSTRAINT "ExpiredToken_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -76,8 +86,23 @@ CREATE TABLE "Image" (
     CONSTRAINT "Image_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "Message" (
+    "id" SERIAL NOT NULL,
+    "message" VARCHAR(255) NOT NULL,
+    "created_at" TIMESTAMP(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "user_a_id" INTEGER NOT NULL,
+    "user_b_id" INTEGER NOT NULL,
+    "object_id" INTEGER NOT NULL,
+
+    CONSTRAINT "Message_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
-CREATE UNIQUE INDEX "email" ON "User"("email");
+CREATE UNIQUE INDEX "ra" ON "User"("ra");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "email" ON "Person"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Person_user_id_key" ON "Person"("user_id");
@@ -95,22 +120,31 @@ CREATE INDEX "discoverer_id" ON "Object"("discoverer_id");
 CREATE INDEX "owner_id" ON "Object"("owner_id");
 
 -- AddForeignKey
-ALTER TABLE "Person" ADD CONSTRAINT "Person_ibfk_1" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE NO ACTION ON UPDATE NO ACTION;
+ALTER TABLE "Person" ADD CONSTRAINT "Person_ibfk_1" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
 
 -- AddForeignKey
 ALTER TABLE "Person" ADD CONSTRAINT "Person_image_id_fkey" FOREIGN KEY ("image_id") REFERENCES "Image"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Object" ADD CONSTRAINT "Object_owner_id_fkey" FOREIGN KEY ("owner_id") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Object" ADD CONSTRAINT "Object_owner_id_fkey" FOREIGN KEY ("owner_id") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Object" ADD CONSTRAINT "Object_discoverer_id_fkey" FOREIGN KEY ("discoverer_id") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Object" ADD CONSTRAINT "Object_discoverer_id_fkey" FOREIGN KEY ("discoverer_id") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "TagsOnObjects" ADD CONSTRAINT "TagsOnObjects_object_id_fkey" FOREIGN KEY ("object_id") REFERENCES "Object"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "TagsOnObjects" ADD CONSTRAINT "TagsOnObjects_object_id_fkey" FOREIGN KEY ("object_id") REFERENCES "Object"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "TagsOnObjects" ADD CONSTRAINT "TagsOnObjects_tag_id_fkey" FOREIGN KEY ("tag_id") REFERENCES "Tag"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "TagsOnObjects" ADD CONSTRAINT "TagsOnObjects_tag_id_fkey" FOREIGN KEY ("tag_id") REFERENCES "Tag"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Image" ADD CONSTRAINT "Image_object_id_fkey" FOREIGN KEY ("object_id") REFERENCES "Object"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Image" ADD CONSTRAINT "Image_object_id_fkey" FOREIGN KEY ("object_id") REFERENCES "Object"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Message" ADD CONSTRAINT "Message_user_a_id_fkey" FOREIGN KEY ("user_a_id") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Message" ADD CONSTRAINT "Message_user_b_id_fkey" FOREIGN KEY ("user_b_id") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Message" ADD CONSTRAINT "Message_object_id_fkey" FOREIGN KEY ("object_id") REFERENCES "Object"("id") ON DELETE CASCADE ON UPDATE CASCADE;

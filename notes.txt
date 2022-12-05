@@ -1,0 +1,4 @@
+Criar model no schema.prisma
+Rodar yarn prisma migrate dev --name <nome_tabela>
+Rodar yarn dev restart
+Reiniciar VSCode
