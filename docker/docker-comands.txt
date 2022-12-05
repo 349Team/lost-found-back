@@ -52,6 +52,7 @@ docker exec -it database-lost-found-container bash
 docker stop database-postgres-lost-found-container && 
 docker rm database-postgres-lost-found-container && 
 docker rmi database-postgres/lost-found -f && 
+
 docker build -f database-postgres.dockerfile -t database-postgres/lost-found . && 
 docker run --name database-postgres-lost-found-container -p 5400:5432 -d database-postgres/lost-found && 
 docker container start database-postgres-lost-found-container && 

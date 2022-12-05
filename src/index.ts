@@ -18,7 +18,7 @@ app.use(morganMiddleware)
 
 express.urlencoded({ extended: true })
 
-app.get('/', (req: Request, res: Response) => res.send('Server running version 0.2.1'))
+app.get('/', (req: Request, res: Response) => res.send('Server running version 0.2.5'))
 
 app.use(routes)
 

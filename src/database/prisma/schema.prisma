@@ -69,6 +69,7 @@ model Object {
   owner                             User?           @relation("Object_ownerUser", fields: [ownerId], references: [id], onDelete: Cascade)
   discoverer                        User?           @relation("Object_noOwnerUser", fields: [discovererId], references: [id], onDelete: Cascade)
   tags                              TagsOnObjects[] 
+  messages                          Message[]       @relation("Object_Message")
 
   @@index([discovererId], map: "discoverer_id")
   @@index([ownerId], map: "owner_id")
@@ -119,14 +120,17 @@ enum ImageUse {
   OBJECT
 }
 
+// sender: userA
 model Message {
   id                                Int             @id @default(autoincrement())
   message                           String          @db.VarChar(255)
   createdAt                         DateTime        @default(now()) @db.Timestamp(0) @map("created_at")
 
-  userAId                           Int             @map("user_a_id")                 
-  userBId                           Int             @map("user_b_id")
+  userA_id                           Int             @map("user_a_id")                 
+  userB_id                           Int             @map("user_b_id")
+  object_id                          Int             @map("object_id")
 
-  userA                             User            @relation("UserA_Message", fields: [userAId], references: [id], onDelete: Cascade)
-  userB                             User            @relation("UserB_Message", fields: [userBId], references: [id], onDelete: Cascade)
-}
+  userA                             User            @relation("UserA_Message", fields: [userA_id], references: [id], onDelete: Cascade)
+  userB                             User            @relation("UserB_Message", fields: [userB_id], references: [id], onDelete: Cascade)
+  objectId                          Object          @relation("Object_Message", fields: [object_id], references :[id], onDelete: Cascade)
+} 
