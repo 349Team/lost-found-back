@@ -1,16 +1,24 @@
 import { objectRepository } from "../database/repositories/object-repository"
 import { BadRequestException, NotFoundException, UnsupportedMediaTypeException } from "../models/exception-http"
-import { isObjectCreateRequestDTO, ObjectCreateRequestDTO, ObjectResponseDTO, ObjectResumeResponseDTO, objectToObjectResponseDTO, objectToObjectResumeResponseDTO } from "../models/object-dtos"
-import { ImageUse, ObjectType, Tag } from "@prisma/client"
+import { isObjectCreateRequestDTO, ObjectCreateRequestDTO, objectReponseDTOtoV2, ObjectResponseDTO, ObjectResponseDTO_V2, ObjectResumeResponseDTO, objectToObjectResponseDTO, objectToObjectResumeResponseDTO } from "../models/object-dtos"
+import { ImageUse, Object, ObjectType, Tag, TagsOnObjects, Image, ObjectStatus, prisma } from "@prisma/client"
 import { imageRepository } from "../database/repositories/image-repository"
 import { userRepository } from "../database/repositories/user-repository"
 import { imageService } from "./image-service"
 import { SimpleResponse } from "../models/simple-response"
 import { removeFile } from "../tools/files"
 
+type ObjectWithImagesAndsTags = (Object & {
+  images: Image[];
+  tags: (TagsOnObjects & {
+      tag: Tag;
+  })[];
+})[]
+
 
 class ObjectService {
 
+  /* criar um novo objeto */
   public async createObject(dto: ObjectCreateRequestDTO): Promise<ObjectResponseDTO> {
 
     if (!isObjectCreateRequestDTO(dto)) throw new BadRequestException('invalid arguments')
@@ -40,6 +48,7 @@ class ObjectService {
     return response
   }
 
+  /* persistir as imagens e acomplar as referências das imagens à um determinado objeto */
   public async addImagesToObject(files: Express.Multer.File[] | undefined, objectId: number) {
 
     if (!files) throw new BadRequestException('no files available for download')
@@ -70,25 +79,18 @@ class ObjectService {
     return persistedFiles
   }
 
-  public async getObjectById(id: number): Promise<ObjectResponseDTO> {
+  /* encontrar um determinado  */
+  public async getObjectById(id: number): Promise<ObjectResponseDTO_V2> {
     var object = await objectRepository.findObject(id)
     if(!object)   throw new NotFoundException('object not found')
 
-    var tags: Tag[] = []
-
-    for (var tag of object.tags){
-      var res = await objectRepository.findTag(tag.tagId)
-      if(res) tags.push(res)
-    }
-
-    var obj = {...object, tags: tags}
-
-    var response = objectToObjectResponseDTO(obj)
-    return response
+    var response = objectToObjectResponseDTO(object)
+    return objectReponseDTOtoV2(response)
   }
 
-  public async findObjectsByUserId(id: number): Promise<ObjectResponseDTO[]> {
-    var objects: any = await objectRepository.findObjectsByUserId(id)
+  /* encontrar os objetos pertencentes a um determinado usuário */
+  public async findObjectsByUserId(id: number): Promise<{ objects: ObjectResponseDTO_V2[], total: number}> {
+    var objects = await objectRepository.findObjectsByUserId(id)
 
 
     var objectsAndTags: any[] = []
@@ -104,10 +106,11 @@ class ObjectService {
        objectsAndTags.push({...object, tags: tags})
     }
 
-    var response = objectsAndTags.map(objectToObjectResponseDTO)
-    return response
+    var response = objectsAndTags.map(objectToObjectResponseDTO).map(objectReponseDTOtoV2)
+    return { objects: response, total: response.length }
   }
 
+  /* deletar um determinado objeto */
   public async deleteObjectById(id: number) {
     var object = await objectRepository.findObject(id)
 
@@ -126,7 +129,8 @@ class ObjectService {
     return new SimpleResponse(`object '${object.title}' deleted successfully !`)
  }
 
-  public async searchOnObjects(search: string): Promise<ObjectResumeResponseDTO[]> {
+ /* pesquisar por uma determinada palavra, a busca será realizada no objeto (title, description) e nas tags do objeto (title, description) */
+  public async searchOnObjects(search: string): Promise<{ objects: ObjectResponseDTO_V2[], total: number}> {
     var objects: any[] = []
 
     var tagsFinded = await objectRepository.searchOnTags(search)
@@ -137,21 +141,53 @@ class ObjectService {
 
     objects = [ ...objects, ...(await objectRepository.searchOnObjects(search)) ]
 
-    var response = objects.map(objectToObjectResumeResponseDTO)
+    var objectsAndTags: any[] = []
 
-    return response
+    for (var object of objects as ObjectWithImagesAndsTags){
+      var tags: Tag[] = []
+
+      for (var t of object.tags){
+        var res = await objectRepository.findTag(t.tagId)
+        if(res) tags.push(res)
+      }
+
+       objectsAndTags.push({...object, tags: tags})
+    }
+
+    var response = objectsAndTags.map(objectToObjectResponseDTO).map(objectReponseDTOtoV2)
+    return { objects: response, total: response.length }
   }
 
-  public async findObjectsByTag(id: number): Promise<ObjectResumeResponseDTO[]> {
+  /* encontrar grupo de objetos que possuem uma determinada tag */
+  public async findObjectsByTag(id: number): Promise<ObjectResponseDTO_V2[]> {
     var tag = await objectRepository.findTag(id)
 
     if(!tag)  throw new NotFoundException('tag not found')
 
     var objects = await objectRepository.findObjectsByTag(tag.id)
 
-    var response = objects.map(objectToObjectResumeResponseDTO)
+    var response = objects.map(objectToObjectResponseDTO).map(objectReponseDTOtoV2)
 
     return response
+  }
+
+  /* buscar todos os objetos no database */
+  public async findAll(): Promise<{ objects: ObjectResponseDTO_V2[], total: number}> {
+    var objects = await objectRepository.findAll()
+    var response = await objects.map(objectToObjectResponseDTO)
+
+    var responseConverted = response.map((obj) => objectReponseDTOtoV2(obj))
+    return { objects: responseConverted, total: response.length}
+  }
+
+  public async finishObject(id: number): Promise<void> {
+    var object = await objectRepository.findObject(id)
+
+    if(!object) throw new NotFoundException('object not found')
+
+    object.status = ObjectStatus.FINISHED
+    
+    await objectRepository.updateObject(object)
   }
 }
 

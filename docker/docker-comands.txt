@@ -42,3 +42,24 @@ docker rmi database-mysql/lost-found -f &&
 docker build -f database.dockerfile -t database-mysql/lost-found . && 
 docker run --name database-lost-found-container -p 3306:3306 -d database-mysql/lost-found && 
 docker exec -it database-lost-found-container bash
+
+
+
+
+
+[ Postgres ]
+
+docker stop database-postgres-lost-found-container && 
+docker rm database-postgres-lost-found-container && 
+docker rmi database-postgres/lost-found -f && 
+
+docker build -f database-postgres.dockerfile -t database-postgres/lost-found . && 
+docker run --name database-postgres-lost-found-container -p 5400:5432 -d database-postgres/lost-found && 
+docker container start database-postgres-lost-found-container && 
+docker container exec -it database-postgres-lost-found-container bash
+
+psql -p 5432 -d root -U root
+
+
+
+docker container start database-postgres-lost-found-container

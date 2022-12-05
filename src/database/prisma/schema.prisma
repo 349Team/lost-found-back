@@ -1,16 +1,17 @@
 generator client {
   provider = "prisma-client-js"
-  previewFeatures = ["fullTextSearch", "fullTextIndex"]
+  previewFeatures = ["fullTextSearch"]
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
+
 model User {
-  id                                Int             @id @default(autoincrement()) @db.UnsignedInt
-  email                             String          @unique(map: "email") @db.VarChar(255)
+  id                                Int             @id @default(autoincrement())
+  ra                                String          @unique(map: "ra") @db.VarChar(255)
   password                          String          @db.VarChar(255)
   createdAt                         DateTime        @default(now()) @db.Timestamp(0) @map("created_at")
   updatedAt                         DateTime        @db.Timestamp(0)  @map("updated_at")
@@ -19,30 +20,40 @@ model User {
   ownerObjects                      Object[]        @relation("Object_ownerUser")
   foundNoOwnerObjects               Object[]        @relation("Object_noOwnerUser")
   Person                            Person?
+
+  messagesA                         Message[]       @relation("UserA_Message")
+  messagesB                         Message[]       @relation("UserB_Message") 
 }
 
 model Person {
-  id                                Int             @id @default(autoincrement()) @db.UnsignedInt
+  id                                Int             @id @default(autoincrement())
   full_name                         String          @db.VarChar(255)
-  nickname                          String          @db.VarChar(255)
+  email                             String          @unique(map: "email") @db.VarChar(255)
   campus                            String?         @db.VarChar(45)
   createdAt                         DateTime        @default(now()) @db.Timestamp(0) @map("created_at")
   updatedAt                         DateTime        @db.Timestamp(0) @map("updated_at")
 
-  userId                            Int             @unique @db.UnsignedInt @map("user_id")
-  imageId                           Int?            @unique @db.UnsignedInt @map("image_id")
+  userId                            Int             @unique @map("user_id")
+  imageId                           Int?            @unique @map("image_id")
 
 
-  user       User     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "Person_ibfk_1")
-  image      Image?    @relation(fields: [imageId], references: [id])
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "Person_ibfk_1")
+  image      Image?    @relation(fields: [imageId], references: [id], onDelete: SetNull)
 
   @@index([userId], map: "user_id")
 }
 
+model ExpiredToken {
+  id                              Int              @id @default(autoincrement())
+  token                           String           @db.VarChar(255)
+  createdAt                       DateTime         @default(now()) @db.Timestamp(0) @map("created_at")
+  expireAt                        DateTime         @db.Timestamp(0) @map("expire_at")
+}
+
 model Object {
-  id                                Int             @id @default(autoincrement()) @db.UnsignedInt
+  id                                Int             @id @default(autoincrement())
   title                             String          @db.VarChar(255)
-  description                       String?         @db.MediumText
+  description                       String?
   location                          String?         @db.VarChar(255)
   type                              ObjectType
   status                            ObjectStatus
@@ -50,49 +61,46 @@ model Object {
   updatedAt                         DateTime        @db.Timestamp(0) @map("updated_at")
 
 
-  ownerId                           Int?            @db.UnsignedInt @map("owner_id")
-  discovererId                      Int?            @db.UnsignedInt @map("discoverer_id")
+  ownerId                           Int?            @map("owner_id")
+  discovererId                      Int?            @map("discoverer_id")
 
 
   images                            Image[]         @relation("Image_Object")
-  owner                             User?           @relation("Object_ownerUser", fields: [ownerId], references: [id])
-  discoverer                        User?           @relation("Object_noOwnerUser", fields: [discovererId], references: [id])
-  tags                              TagsOnObjects[]
+  owner                             User?           @relation("Object_ownerUser", fields: [ownerId], references: [id], onDelete: Cascade)
+  discoverer                        User?           @relation("Object_noOwnerUser", fields: [discovererId], references: [id], onDelete: Cascade)
+  tags                              TagsOnObjects[] 
 
   @@index([discovererId], map: "discoverer_id")
   @@index([ownerId], map: "owner_id")
-  @@fulltext([title, description])
 }
 
 model Tag {
-  id                                Int             @id @default(autoincrement()) @db.UnsignedInt
-  title                             String          @db.VarChar(255)
-  description                       String?         @db.MediumText
+  id                                Int                 @id @default(autoincrement())
+  title                             String              @db.VarChar(255)
+  description                       String?
 
   objecs                            TagsOnObjects[]
-
-  @@fulltext([title, description])
 }
 
 model TagsOnObjects {
-  objectId                          Int            @db.UnsignedInt @map("object_id")
-  tagId                             Int            @db.UnsignedInt @map("tag_id")
+  objectId                          Int            @map("object_id")
+  tagId                             Int            @map("tag_id")
 
-  object                            Object         @relation(fields: [objectId], references: [id])
-  tag                               Tag            @relation(fields: [tagId], references: [id])
+  object                            Object         @relation(fields: [objectId], references: [id], onDelete: Cascade)
+  tag                               Tag            @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@id([objectId, tagId])
 }
 
 model Image {
-  id                                Int             @id @default(autoincrement()) @db.UnsignedInt
+  id                                Int             @id @default(autoincrement())
   source                            String          @db.VarChar(255)
   use                               ImageUse
                     
-  objectId                          Int?            @db.UnsignedInt @map("object_id")   
-  personId                          Int?            @db.UnsignedInt @map("person_id")
+  objectId                          Int?            @map("object_id")   
+  personId                          Int?            @map("person_id")
 
-  object                            Object?         @relation("Image_Object", fields: [objectId], references: [id])
+  object                            Object?         @relation("Image_Object", fields: [objectId], references: [id], onDelete: Cascade)
   person                            Person?
 }
 
@@ -110,3 +118,17 @@ enum ImageUse {
   GENERAL
   OBJECT
 }
+
+model Message {
+  id                                Int             @id @default(autoincrement())
+  message                           String          @db.VarChar(255)
+  createdAt                         DateTime        @default(now()) @db.Timestamp(0) @map("created_at")
+
+  userA_id                           Int             @map("user_a_id")                 
+  userB_id                           Int             @map("user_b_id")
+  object_id                          Int             @map("object_id")
+
+  userA                             User            @relation("UserA_Message", fields: [userA_id], references: [id], onDelete: Cascade)
+  userB                             User            @relation("UserB_Message", fields: [userB_id], references: [id], onDelete: Cascade)
+  objectId                          Object          @relation("Object_Message", fields: [object_id], references :[id], onDelete: Cascade)
+} 

@@ -1,10 +1,10 @@
 import { Request, Response, Router } from 'express'
-import { HttpExceptionHandler } from '../models/exception-http'
+import { HttpExceptionHandler, ServiceUnavailableException, UnauthorizedException } from '../models/exception-http'
 import { userService } from '../services/user-service'
 
 const userController = Router()
 
-/* create user */
+/* criar um novo usuário */
 userController.post('/', async (req: Request, res: Response) => {
    try {
       var response = await userService.createUser(req.body)
@@ -12,19 +12,20 @@ userController.post('/', async (req: Request, res: Response) => {
    } catch (err) { HttpExceptionHandler(res, err) }
 })
 
-/* get user */
-userController.get('/:email', async (req: Request, res: Response) => {
+/* buscar um determinado usuário */
+userController.get('/:id', async (req: Request, res: Response) => {
    try {
-      var response = await userService.findUserByEmail(req.params.email)
+      var response = await userService.findUserById(Number(req.params.id))
       res.status(200).json(response)
    } catch (err) { HttpExceptionHandler(res, err) }
 })
 
-/* delete user */
+/* deletar um determinado usuário */
 userController.delete('/:email', async (req: Request, res: Response) => {
    try {
-      var response = await userService.deleteUserByEmail(req.params.email)
-      res.status(200).json(response)
+      throw new ServiceUnavailableException()
+      var response = await userService.deleteUserById(Number(req.params.email))
+      return res.status(200).json(response)
    } catch (err) { HttpExceptionHandler(res, err) }
 })
 

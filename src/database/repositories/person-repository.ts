@@ -2,12 +2,12 @@ import { Person } from "@prisma/client";
 import { Prisma } from "..";
 
 class PersonRepository {
-   public async createPerson(userId: number, fullName: string, nickName: string, campus: string, image: any) {
+   public async createPerson(userId: number, fullName: string, email: string, campus: string, image: any) {
       return await Prisma.person.create({
          data: {
             userId: userId,
             full_name: fullName,
-            nickname: nickName,
+            email: email,
             campus: campus,
             imageId: undefined,
             updatedAt: new Date(),
