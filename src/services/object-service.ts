@@ -154,7 +154,7 @@ class ObjectService {
        objectsAndTags.push({...object, tags: tags})
     }
 
-    var response = objectsAndTags.map(objectToObjectResponseDTO).map(objectReponseDTOtoV2)
+    var response = objectsAndTags.map(objectToObjectResponseDTO).map(objectReponseDTOtoV2).sort((a, b) => a.status === ObjectStatus.FINISHED ? -1 : 1)
     return { objects: response, total: response.length }
   }
 
@@ -176,7 +176,7 @@ class ObjectService {
     var objects = await objectRepository.findAll()
     var response = await objects.map(objectToObjectResponseDTO)
 
-    var responseConverted = response.map((obj) => objectReponseDTOtoV2(obj))
+    var responseConverted = response.map((obj) => objectReponseDTOtoV2(obj)).sort((a, b) => a.status === ObjectStatus.FINISHED ? -1 : 1)
     return { objects: responseConverted, total: response.length}
   }
 
@@ -185,8 +185,12 @@ class ObjectService {
 
     if(!object) throw new NotFoundException('object not found')
 
+    // if(object.ownerId)
+    //   object.discovererId = id
+    // else object.ownerId = id
+
     object.status = ObjectStatus.FINISHED
-    
+
     await objectRepository.updateObject(object)
   }
 }

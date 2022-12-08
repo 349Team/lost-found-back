@@ -49,7 +49,7 @@ class ObjectRepository {
   }
 
   public async updateObject(object: Object) {
-    return await Prisma.object.update({ where: {id: object.id}, data: {...object, tags: undefined, images: undefined}})
+    return await Prisma.object.update({ where: {id: object.id}, data: {...object, tags: undefined, images: undefined, messages: undefined}})
   }
 
   public async findObjectsByUserId(id: number) {

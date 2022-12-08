@@ -11,8 +11,8 @@ const createDefaultUsers = async () => {
         updatedAt: new Date()
       },
       person: {
-        email: 'userOne@email.com',
-        full_name: 'user One Full Name',
+        email: 'john_smith@email.com',
+        full_name: 'John Smith',
         updatedAt: new Date(),
         campus: 'Campo Mourão',
       }
@@ -24,8 +24,8 @@ const createDefaultUsers = async () => {
         updatedAt: new Date()
       },
       person: {
-        email: 'userTwo@email.com',
-        full_name: 'user Two Full Name',
+        email: 'tony_stark',
+        full_name: 'Tony Stark',
         updatedAt: new Date(),
         campus: 'Campo Mourão',
       }
