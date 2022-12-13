@@ -20,9 +20,13 @@ class UserService {
 
       if (!isUserCreateRequestDTO(dto)) throw new BadRequestException('invalid arguments')
 
-      var exists = !!await userRepository.findUserByRA(dto.ra)
+      var user_exists = !!await userRepository.findUserByRA(dto.ra)
 
-      if (exists) throw new ConflictException('user already exists')
+      if (user_exists) throw new ConflictException('user already exists')
+
+      var person_exits = !!await personRepository.findPersonByEmail(dto.email)
+
+      if(person_exits) throw new ConflictException('email is already being used')
 
       user = await userRepository.createUser(dto.ra, dto.password)
 

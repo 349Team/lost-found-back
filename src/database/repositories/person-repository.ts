@@ -23,6 +23,14 @@ class PersonRepository {
       }) ?? undefined
    }
 
+   public async findPersonByEmail(email: string): Promise<Person | null> {
+      return await Prisma.person.findFirst({
+         where: {
+            email: email
+         }
+      }) ?? null
+   }
+
    public async deletePerson(id: number): Promise<Boolean> {
       try {
          await Prisma.person.delete({
